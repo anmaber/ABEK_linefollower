@@ -20,34 +20,30 @@ int I = 0;
 int D = 0;
 int error = 0;
 int Kp = 25;
-int Ki = 0;
-int Kd = 0;
+int Ki = 0.5;
+int Kd = 10;
 int previousError = 0;
-int PIDvalue = 0;
+float PIDvalue = 0;
 
 void setup() {
-  Serial.begin(9600);                        //inicjalizaja monitora szeregowego
+  Serial.begin(9600);                        
 
   pinMode(trig, OUTPUT);
   pinMode(echo, INPUT);
 
   pinMode(c1, INPUT);
   pinMode(c2, INPUT);
-
   pinMode(c3, INPUT);
-
   pinMode(c4, INPUT);
   pinMode(c5, INPUT);
 
-  // put your setup code here, to run once:
   pinMode(5, OUTPUT); // PWM Lewy
   pinMode(8, OUTPUT); // Silnik lewy
   pinMode(7, OUTPUT);
-  //  pinMode(2, OUTPUT);
-  //  pinMode(28, OUTPUT);
 
-  pinMode(6, OUTPUT); // PWM Lewy
-  pinMode(9, OUTPUT); // Silnik lewy
+
+  pinMode(6, OUTPUT); // PWM Prawy
+  pinMode(9, OUTPUT); // Silnik Prawy
   pinMode(10, OUTPUT);
 
   analogWrite(5, 0);
@@ -55,12 +51,9 @@ void setup() {
   digitalWrite(8, LOW);
 
   digitalWrite(6, 0);
-  digitalWrite(9, HIGH); //Silnik nr 1 - obroty w lewo
+  digitalWrite(9, HIGH); //Silnik nr 2 - obroty w lewo
   digitalWrite(10, LOW);
   delay(2000);
-
-
-
 }
 
 
@@ -78,146 +71,27 @@ void loop() {
 
     c1val = mapADC(analogRead(c1));
     c2val = mapADC(analogRead(c2));
-
     c3val = mapADC(analogRead(c3));
-
     c4val = mapADC(analogRead(c4));
-
     c5val = mapADC(analogRead(c5));
-
+    
     error = getError();
     calculatePID();
-    jedzKurwa();
-
-
-   
-
-    // DZIALALO
-//        if (c3val > 2.5)
-//        {
-//          analogWrite(5, 79);
-//          analogWrite(6, 64);
-//        }
-//        else if (c4val > 2.5)
-//        {
-//          analogWrite(5, 50);
-//          analogWrite(6, 150);
-//        } else if (c2val > 2.5)
-//        {
-//          analogWrite(5, 160);
-//          analogWrite(6, 50);
-//        }
-//        else if (c1val > 2.5)
-//        {
-//          analogWrite(5, 200);
-//          analogWrite(6, 50);
-//    
-//        } else if (c5val > 2.5)
-//        {
-//          analogWrite(5, 45);
-//          analogWrite(6, 200);
-//        }
-//        else
-//        {
-//          analogWrite(5, 0);
-//          analogWrite(6, 0);
-//        }
-
-
-
-    //    if(c1val < 3 && c3val >3 && c5val <3)
-    //    {
-    //      analogWrite(5, 79);
-    //      analogWrite(6, 64);
-    //    }
-    //    else if(c1val > 3 && c3val >3 && c5val <3)
-    //    {
-    //      analogWrite(5, 139);
-    //      analogWrite(6, 64);
-    //    }
-    //    else if(c1val < 3 && c3val >3 && c5val >3)
-    //    {
-    //      analogWrite(5, 79);
-    //      analogWrite(6, 127);
-    //    }
-    //    else
-    //    {
-    //      analogWrite(5, 0);
-    //      analogWrite(6, 0);
-    //    }
-
-
-    //    if (c1val < 0.5 && c2val < 0.5 && c3val > 2.5 && c4val < 0.5 && c5val < 0.5)
-    //    {
-    //      analogWrite(5, 79);
-    //      analogWrite(6, 64);
-    //    }
-    //
-    //        if (c1val < 0.5 && c2val >2.5 && c3val > 2.5 && c4val < 0.5 && c5val < 0.5)
-    //    {
-    //      analogWrite(5, 139);
-    //      analogWrite(6, 64);
-    //    }else
-    //
-    //        if (c1val < 0.5 && c2val < 0.5 && c3val > 2.5 && c4val >2.5 && c5val < 0.5)
-    //    {
-    //      analogWrite(5, 79);
-    //      analogWrite(6, 127);
-    //    }
-
-
-    //        if (c1val < 0.5 && c2val < 0.5 && c3val > 3 && c4val < 0.5 && c5val < 0.5)
-    //    {
-    //      analogWrite(5, 79);
-    //      analogWrite(6, 64);
-    //    }
-    //        if (c1val < 0.5 && c2val < 0.5 && c3val > 3 && c4val < 0.5 && c5val < 0.5)
-    //    {
-    //      analogWrite(5, 79);
-    //      analogWrite(6, 64);
-    //    }
-
-
+    motorControl();
   }
-  delay(200);
-
-
-
-  //  Obroty silnika przez sekundę do przodu z prędkością 100
-  //  analogWrite(5, 64);
-  //  analogWrite(6, 64);
-  //
-  //  delay(5000);
-  //
-  //  analogWrite(5, 127);
-  //  analogWrite(6, 127);
-  //
-  //  delay(5000);
-  //
-  //  analogWrite(5, 191);
-  //  analogWrite(6, 191);
-  //
-  //  delay(5000);
 }
 
 int getError()
 {
-  if (c1val > 2.5) return 4;
-  if (c2val > 2.5) return 2;
-  if (c3val > 2.5) return 0;
-  if (c4val > 2.5) return -2;
-  if (c5val > 2.5) return -4;
-
-//  if (c1val < 3 && c2val < 3 && c3val < 3 && c4val < 3 && c5val > 3) return -4;
-//  if (c1val < 3 && c2val < 3 && c3val < 3 && c4val > 3 && c5val > 3) return -3;
-//  if (c1val < 3 && c2val < 3 && c3val < 3 && c4val > 3 && c5val < 3) return -2;
-//  if (c1val < 3 && c2val < 3 && c3val > 3 && c4val > 3 && c5val < 3) return -1;
-//  if (c1val < 3 && c2val < 3 && c3val > 3 && c4val < 3 && c5val < 3) return 0;
-//  if (c1val < 3 && c2val > 3 && c3val > 3 && c4val < 3 && c5val < 3) return 1;
-//  if (c1val < 3 && c2val > 3 && c3val < 3 && c4val < 3 && c5val < 3) return 2;
-//  if (c1val > 3 && c2val > 3 && c3val < 3 && c4val < 3 && c5val < 3) return 3;
-//  if (c1val > 3 && c2val < 3 && c3val < 3 && c4val < 3 && c5val < 3) return 4;
-
+  if (c1val > 2.5 && c2val < 2.5 && c3val <2.5 && c4val<2.5 && c5val<2.5) return 4;
+  if (c1val > 2.5 && c2val > 2.5 && c3val <2.5 && c4val<2.5 && c5val<2.5) return 3;
+  if (c2val > 2.5 &&c1val < 2.5 && c3val<2.5 && c4val<2.5 && c5val<2.5) return 2;
+  if (c1val < 2.5 && c2val > 2.5 && c3val >2.5 && c4val<2.5 && c5val<2.5) return 1;
+  if (c3val > 2.5&& c2val < 2.5 && c1val<2.5 && c4val<2.5 && c5val<2.5) return 0;
+  if (c1val < 2.5 && c2val < 2.5 && c3val >2.5 && c4val>2.5 && c5val<2.5) return -1;
+  if (c4val > 2.5&& c2val < 2.5 && c3val<2.5 && c1val<2.5 && c5val<2.5) return -2;
+  if (c1val < 2.5 && c2val < 2.5 && c3val <2.5 && c4val>2.5 && c5val>2.5) return -3;
+  if (c5val > 2.5&& c2val < 2.5 && c3val<2.5 && c4val<2.5 && c1val<2.5) return -4;
 }
 
 void calculatePID()
@@ -229,10 +103,19 @@ void calculatePID()
   previousError = error;
 }
 
-void jedzKurwa()
+void motorControl()
 {
+  if(PIDvalue >= 127)
+  {
+   analogWrite(5, 0);
+  analogWrite(6, 0);
+  } else
+  {
+  PIDvalue = int(PIDvalue);
   analogWrite(5, 139 + PIDvalue);
   analogWrite(6, 127 - PIDvalue);
+  }
+ 
 }
 
 float mapADC(int adcValue)
