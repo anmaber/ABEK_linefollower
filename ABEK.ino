@@ -15,15 +15,15 @@ float c3val = 0;
 float c4val = 0;
 float c5val = 0;
 
-int P =0;
+int P = 0;
 int I = 0;
 int D = 0;
-int error =0;
-int Kp=10;
-int Ki=0;
-int Kd=0;
-int previousError =0;
-int PIDvalue=0;
+int error = 0;
+int Kp = 25;
+int Ki = 0;
+int Kd = 0;
+int previousError = 0;
+int PIDvalue = 0;
 
 void setup() {
   Serial.begin(9600);                        //inicjalizaja monitora szeregowego
@@ -85,44 +85,46 @@ void loop() {
 
     c5val = mapADC(analogRead(c5));
 
-    getError();
+    error = getError();
     calculatePID();
     jedzKurwa();
-    
-
-// DZIALALO
-//    if (c3val > 2.5)
-//    {
-//      analogWrite(5, 79);
-//      analogWrite(6, 64);
-//    }
-//    else if (c4val > 2.5)
-//    {
-//      analogWrite(5, 50);
-//      analogWrite(6, 150);
-//    } else if (c2val > 2.5)
-//    {
-//      analogWrite(5, 160);
-//      analogWrite(6, 50);
-//    }
-//    else if (c1val > 2.5)
-//    {
-//      analogWrite(5, 200);
-//      analogWrite(6, 50);
-//
-//    } else if (c5val > 2.5)
-//    {
-//      analogWrite(5, 45);
-//      analogWrite(6, 200);
-//    }
-//    else
-//    {
-//      analogWrite(5, 0);
-//      analogWrite(6, 0);
-//    }
 
 
-    
+   
+
+    // DZIALALO
+//        if (c3val > 2.5)
+//        {
+//          analogWrite(5, 79);
+//          analogWrite(6, 64);
+//        }
+//        else if (c4val > 2.5)
+//        {
+//          analogWrite(5, 50);
+//          analogWrite(6, 150);
+//        } else if (c2val > 2.5)
+//        {
+//          analogWrite(5, 160);
+//          analogWrite(6, 50);
+//        }
+//        else if (c1val > 2.5)
+//        {
+//          analogWrite(5, 200);
+//          analogWrite(6, 50);
+//    
+//        } else if (c5val > 2.5)
+//        {
+//          analogWrite(5, 45);
+//          analogWrite(6, 200);
+//        }
+//        else
+//        {
+//          analogWrite(5, 0);
+//          analogWrite(6, 0);
+//        }
+
+
+
     //    if(c1val < 3 && c3val >3 && c5val <3)
     //    {
     //      analogWrite(5, 79);
@@ -200,15 +202,21 @@ void loop() {
 
 int getError()
 {
-  if (c1val < 3 && c2val < 3 && c3val < 3 && c4val < 3 && c5val > 3) return -4;
-  if (c1val < 3 && c2val < 3 && c3val < 3 && c4val > 3 && c5val > 3) return -3;
-  if (c1val < 3 && c2val < 3 && c3val < 3 && c4val > 3 && c5val < 3) return -2;
-  if (c1val < 3 && c2val < 3 && c3val > 3 && c4val > 3 && c5val < 3) return -1;
-  if (c1val < 3 && c2val < 3 && c3val > 3 && c4val < 3 && c5val < 3) return 0;
-  if (c1val < 3 && c2val > 3 && c3val > 3 && c4val < 3 && c5val < 3) return 1;
-  if (c1val < 3 && c2val > 3 && c3val < 3 && c4val < 3 && c5val < 3) return 2;
-  if (c1val > 3 && c2val > 3 && c3val < 3 && c4val < 3 && c5val < 3) return 3;
-  if (c1val > 3 && c2val < 3 && c3val < 3 && c4val < 3 && c5val < 3) return 4;
+  if (c1val > 2.5) return 4;
+  if (c2val > 2.5) return 2;
+  if (c3val > 2.5) return 0;
+  if (c4val > 2.5) return -2;
+  if (c5val > 2.5) return -4;
+
+//  if (c1val < 3 && c2val < 3 && c3val < 3 && c4val < 3 && c5val > 3) return -4;
+//  if (c1val < 3 && c2val < 3 && c3val < 3 && c4val > 3 && c5val > 3) return -3;
+//  if (c1val < 3 && c2val < 3 && c3val < 3 && c4val > 3 && c5val < 3) return -2;
+//  if (c1val < 3 && c2val < 3 && c3val > 3 && c4val > 3 && c5val < 3) return -1;
+//  if (c1val < 3 && c2val < 3 && c3val > 3 && c4val < 3 && c5val < 3) return 0;
+//  if (c1val < 3 && c2val > 3 && c3val > 3 && c4val < 3 && c5val < 3) return 1;
+//  if (c1val < 3 && c2val > 3 && c3val < 3 && c4val < 3 && c5val < 3) return 2;
+//  if (c1val > 3 && c2val > 3 && c3val < 3 && c4val < 3 && c5val < 3) return 3;
+//  if (c1val > 3 && c2val < 3 && c3val < 3 && c4val < 3 && c5val < 3) return 4;
 
 }
 
@@ -216,14 +224,14 @@ void calculatePID()
 {
   P = error;
   I = I + error;
-  D = error-previousError;
-  PIDvalue = (Kp*P) + (Ki*I) + (Kd*D);
+  D = error - previousError;
+  PIDvalue = (Kp * P) + (Ki * I) + (Kd * D);
   previousError = error;
 }
 
 void jedzKurwa()
 {
-  analogWrite(5, 139 - PIDvalue);
+  analogWrite(5, 139 + PIDvalue);
   analogWrite(6, 127 - PIDvalue);
 }
 
