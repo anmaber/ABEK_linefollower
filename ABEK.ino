@@ -1,3 +1,6 @@
+#include <ESP8266_Lib.h>
+#include <BlynkSimpleShieldEsp8266.h>
+
 #define echo 2
 #define trig 3
 
@@ -6,6 +9,23 @@
 #define c3 A2
 #define c4 A3
 #define c5 A6 //naj lewa
+
+char auth[] = "lnVIdwvH_-dpApSpS-acj-uiqBZpZdTl";
+char ssid[] = "ssid";
+char pass[] = "passs";
+
+#define EspSerial Serial
+#define ESP8266_BAUD 9600
+
+ESP8266 wifi(&EspSerial);
+
+int value;
+int flag = 0;
+BLYNK_WRITE(V0)
+{
+  flag = 1;
+  value = param.asInt(); // Get value as integer
+}
 
 long czas;
 int cm;
@@ -26,7 +46,6 @@ int previousError = 0;
 float PIDvalue = 0;
 
 void setup() {
-  Serial.begin(9600);                        
 
   pinMode(trig, OUTPUT);
   pinMode(echo, INPUT);
@@ -53,45 +72,66 @@ void setup() {
   digitalWrite(6, 0);
   digitalWrite(9, HIGH); //Silnik nr 2 - obroty w lewo
   digitalWrite(10, LOW);
+
+  pinMode(13, OUTPUT);
+  digitalWrite(13, LOW);
+  //pinMode(LED_BUILTIN, OUTPUT);
+
+  // Set ESP8266 baud rate
+  EspSerial.begin(ESP8266_BAUD);
+  delay(10);
+
+  Blynk.begin(auth, wifi, ssid, pass);
   delay(2000);
 }
 
 
 void loop() {
+  Blynk.run();
+  if (flag == 1)
+  {
+    flag = 0;
+    if (value == 1)
+    {
+      digitalWrite(13, HIGH);
+    }
+    else
+    {
+      digitalWrite(13, LOW);
+    }
+  }
 
   pomiar_odleglosci();
-  if (cm < 40)
+  if (cm > 40 && value == 1)
   {
-    analogWrite(5, 0);
-    analogWrite(6, 0);
-
-  }
-  else
-  {
-
     c1val = mapADC(analogRead(c1));
     c2val = mapADC(analogRead(c2));
     c3val = mapADC(analogRead(c3));
     c4val = mapADC(analogRead(c4));
     c5val = mapADC(analogRead(c5));
-    
+
     error = getError();
     calculatePID();
     motorControl();
+  }
+  else
+  {
+    analogWrite(5, 0);
+    analogWrite(6, 0);
   }
 }
 
 int getError()
 {
-  if (c1val > 2.5 && c2val < 2.5 && c3val <2.5 && c4val<2.5 && c5val<2.5) return 4;
-  if (c1val > 2.5 && c2val > 2.5 && c3val <2.5 && c4val<2.5 && c5val<2.5) return 3;
-  if (c2val > 2.5 &&c1val < 2.5 && c3val<2.5 && c4val<2.5 && c5val<2.5) return 2;
-  if (c1val < 2.5 && c2val > 2.5 && c3val >2.5 && c4val<2.5 && c5val<2.5) return 1;
-  if (c3val > 2.5&& c2val < 2.5 && c1val<2.5 && c4val<2.5 && c5val<2.5) return 0;
-  if (c1val < 2.5 && c2val < 2.5 && c3val >2.5 && c4val>2.5 && c5val<2.5) return -1;
-  if (c4val > 2.5&& c2val < 2.5 && c3val<2.5 && c1val<2.5 && c5val<2.5) return -2;
-  if (c1val < 2.5 && c2val < 2.5 && c3val <2.5 && c4val>2.5 && c5val>2.5) return -3;
-  if (c5val > 2.5&& c2val < 2.5 && c3val<2.5 && c4val<2.5 && c1val<2.5) return -4;
+  if (c1val > 2.5 && c2val < 2.5 && c3val < 2.5 && c4val < 2.5 && c5val < 2.5) return 4;
+  if (c1val > 2.5 && c2val > 2.5 && c3val < 2.5 && c4val < 2.5 && c5val < 2.5) return 3;
+  if (c2val > 2.5 && c1val < 2.5 && c3val < 2.5 && c4val < 2.5 && c5val < 2.5) return 2;
+  if (c1val < 2.5 && c2val > 2.5 && c3val > 2.5 && c4val < 2.5 && c5val < 2.5) return 1;
+  if (c3val > 2.5 && c2val < 2.5 && c1val < 2.5 && c4val < 2.5 && c5val < 2.5) return 0;
+  if (c1val < 2.5 && c2val < 2.5 && c3val > 2.5 && c4val > 2.5 && c5val < 2.5) return -1;
+  if (c4val > 2.5 && c2val < 2.5 && c3val < 2.5 && c1val < 2.5 && c5val < 2.5) return -2;
+  if (c1val < 2.5 && c2val < 2.5 && c3val < 2.5 && c4val > 2.5 && c5val > 2.5) return -3;
+  if (c5val > 2.5 && c2val < 2.5 && c3val < 2.5 && c4val < 2.5 && c1val < 2.5) return -4;
 }
 
 void calculatePID()
@@ -105,23 +145,24 @@ void calculatePID()
 
 void motorControl()
 {
-  if(PIDvalue >= 127)
+  if (PIDvalue >= 127)
   {
-   analogWrite(5, 0);
-  analogWrite(6, 0);
+    analogWrite(5, 0);
+    analogWrite(6, 0);
   } else
   {
-  PIDvalue = int(PIDvalue);
-  analogWrite(5, 139 + PIDvalue);
-  analogWrite(6, 127 - PIDvalue);
+    PIDvalue = int(PIDvalue);
+    analogWrite(5, 139 + PIDvalue);
+    analogWrite(6, 127 - PIDvalue);
   }
- 
+
 }
 
 float mapADC(int adcValue)
 {
   return map(adcValue, 0, 1023, 0, 5);
 }
+
 
 void pomiar_odleglosci()
 {
